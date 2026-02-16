@@ -1,0 +1,94 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.2.1</version>
+    <relativePath/>
+  </parent>
+
+  <name>Telegram Broadcast Admin</name>
+  <description>Локальная веб-панель для отправки Telegram-рассылок с картинками</description>
+
+  <groupId>com.example</groupId>
+  <artifactId>telegram-broadcast-admin</artifactId>
+  <version>1.0.0</version>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
+
+    <postgresql.version>42.2.18</postgresql.version>
+    <telegrambot.version>6.9.7.1</telegrambot.version>
+    <javax.xml.bind.version>2.3.1</javax.xml.bind.version>
+
+    <lombok.servion>1.18.30</lombok.servion>
+  </properties>
+
+  <dependencies>
+
+    <!--Для РАБОТЫ С БД ПО ORM-->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <!--Драйвер постгреса чтобы приложение на уровне операционки могло общаться именно с прогрессом-->
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>${postgresql.version}</version>
+    </dependency>
+    <!--Ох и поебался я изза нее. В спринге есть jackson. Добавление javax.xml.bind:jaxb-api сделало JAXB доступным для Jackson, и Jackson смог успешно обнаружить аннотации и сериализовать/десериализовать объекты.-->
+    <dependency>
+      <groupId>javax.xml.bind</groupId>
+      <artifactId>jaxb-api</artifactId>
+      <version>${javax.xml.bind.version}</version>
+    </dependency>
+
+    <!--Для ТГ-->
+    <dependency>
+      <groupId>org.telegram</groupId>
+      <artifactId>telegrambots</artifactId>
+      <version>${telegrambot.version}</version>
+    </dependency>
+
+    <!-- Веб-интерфейс -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-thymeleaf</artifactId>
+    </dependency>
+
+
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>${lombok.servion}</version>
+      <scope>provided</scope>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven.compiler.plugin.version}</version>
+        <configuration>
+          <source>${maven.compiler.source}</source>
+          <target>${maven.compiler.target}</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
