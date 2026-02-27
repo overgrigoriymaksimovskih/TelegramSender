@@ -12,11 +12,4 @@ public class TelegramAdminApplication {
     public static void main(String[] args) {
         SpringApplication.run(TelegramAdminApplication.class, args);
     }
-
-    @Bean
-    public CommandLineRunner runAfterStart(TelegramHttpService httpService) {
-        return args -> {
-            httpService.sendStartupMessage();
-        };
-    }
 }
