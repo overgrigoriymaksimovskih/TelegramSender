@@ -1,74 +1,57 @@
 package com.example.telegramadmin.service;
 
+import com.example.telegramadmin.dto.MessageRequest;
+import com.example.telegramadmin.dto.NotificationRecipientDto;
+import com.example.telegramadmin.dto.NotificationResultDto;
 import com.example.telegramadmin.dto.tg_result.Result;
 import com.example.telegramadmin.dto.tg_result.Success;
-import com.example.telegramadmin.dto.tg_result.Failure;
 import com.example.telegramadmin.factory.TelegramResultFactory;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-import org.telegram.telegrambots.meta.api.objects.Message;
+
+import com.example.telegramadmin.exceptions.MessageSendingException;
+
+import java.util.List;
 
 @Service
 public class BroadcastOrchestrator {
-
-    private final TelegramHttpService telegramHttpService;
     private final TelegramResultFactory telegramResultFactory;
+    private final NotificationService notificationService;
 
     @Autowired
-    public BroadcastOrchestrator(TelegramHttpService telegramHttpService, TelegramResultFactory telegramResultFactory) {
-        this.telegramHttpService = telegramHttpService;
+    public BroadcastOrchestrator(TelegramResultFactory telegramResultFactory, NotificationService notificationService) {
         this.telegramResultFactory = telegramResultFactory;
+        this.notificationService = notificationService;
     }
-    public void sendMessage(String caption, MultipartFile photoFile) {
-        if (photoFile == null || photoFile.isEmpty()) {
-            System.err.println("Файл изображения не выбран или пуст.");
-            return;
-        }
-        //
+    public void sendMessage(MessageRequest request)  throws MessageSendingException{
+        try{
+            // Отправляем сообщение и получаем JSON‑ответ
+            String jsonResponse = notificationService.crateMainMessage(request);
 
-    }
-    public void sendMessage(String text) {
-        if (text == null || text.trim().isEmpty()) {
-            System.err.println("Текст сообщения пуст.");
-            return;
-        }
-        // 1️⃣ Отправляем сообщение и получаем JSON‑ответ
-        String jsonResponse = telegramHttpService.sendTextMessage(text);
+            // Если мы здесь, значит ответ успешный (200 OK). Парсим его.
+            // Преобразуем JSON в Result<Message>
+            Result<Message> result = telegramResultFactory.fromTelegramResponse(
+                    jsonResponse,
+                    Message.class
+            );
 
-        // 2️⃣ Преобразуем JSON в Result<Message>
-        Result<Message> result = telegramResultFactory.fromTelegramResponse(
-                jsonResponse,
-                Message.class
-        );
-
-        // 3️⃣ Обрабатываем успешный ответ
-        if (result.isSuccess()) {
-            // Внутри Success<T> хранится объект Message
-            Message message = ((Success<Message>) result).getValue();
-
-            // Пример: выводим ID отправленного сообщения
-            System.out.println("Message sent! ID = " + message.getMessageId());
-
-            // Здесь можно делать всё, что нужно с Message (репост, логирование и т.д.)
-            return;
-        }
-
-        // 4️⃣ Обрабатываем ошибку
-        Failure<Message> failure = (Failure<Message>) result;
-
-        // Если ошибка пришла от Telegram (ok:false)
-        if (failure.getErrorCode() != null) {
-            System.err.println("Telegram error: code " + failure.getErrorCode()
-                    + ", description: " + failure.getDescription());
-        }
-        // Если это локальная ошибка (например, пустой текст)
-        else if (failure.getException() != null) {
-            System.err.println("Local error: " + failure.getException().getMessage());
-        }
-        // Любая другая непредвиденная ситуация
-        else {
-            System.err.println("Unknown error while sending message");
+            // Обрабатываем успешный ответ
+            if (result.isSuccess()) {
+                // Получаем список пользователей для уведомлений
+                List<NotificationRecipientDto> notificationRecipientsDtoList = notificationService.getRecipientsDtoList(6128969029L);
+                notificationRecipientsDtoList.add(new NotificationRecipientDto(6128969029L, "Test"));
+                notificationRecipientsDtoList.add(new NotificationRecipientDto(6128969029L, "Test2"));
+                notificationRecipientsDtoList.add(new NotificationRecipientDto(6128969029L, "Test3"));
+                // Копируем отправленное сообщениe всем пользователям
+                List<NotificationResultDto> allNotifications = notificationService.sendCopyOfMessageToRecipients(notificationRecipientsDtoList, result);
+                // Выбираем тех кто не смог получить копию сообщения
+                List<NotificationResultDto> failedNotifications = notificationService.getFailedNotifications(allNotifications);
+            }
+        }catch (MessageSendingException e){
+            // Просто пробрасываем выше исключение, которое пришло из TelegramHttpService
+            // Оно уже содержит все детали (код 403, описание Forbidden)
+            throw e;
         }
     }
 }

@@ -1,16 +1,72 @@
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org">-->
+<!--<head>-->
+<!--    <title>Рассылка</title>-->
+<!--    <link rel="stylesheet" th:href="@{'/static/css/style.css'}" />-->
+<!--</head>-->
+<!--<body>-->
+<!--<h1>Админ-панель рассылок</h1>-->
+
+<!--&lt;!&ndash; Изменения здесь: enctype="multipart/form-data" и method="post" &ndash;&gt;-->
+<!--<form th:action="@{/admin/send}" method="post" enctype="multipart/form-data">-->
+<!--    <label for="text">Сообщение (для подписи к картинке, если есть)</label><br/>-->
+<!--    <textarea id="text" name="text" rows="4" cols="50" placeholder="Сообщение для отправки"></textarea><br/><br/>-->
+
+<!--    &lt;!&ndash; Новое поле для загрузки файла &ndash;&gt;-->
+<!--    <label for="photo">Изображение</label><br/>-->
+<!--    <input type="file" id="photo" name="photo" accept="image/*"><br/><br/>-->
+
+<!--    <button type="submit">Отправить</button>-->
+<!--</form>-->
+
+<!--<p>Тут будет список рассылок или форма для их отправки.</p>-->
+<!--</body>-->
+<!--</html>-->
+
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Рассылка</title>
     <link rel="stylesheet" th:href="@{'/static/css/style.css'}" />
+    <style>
+        .success-message {
+            color: green;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .error-message {
+            color: red;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+    </style>
 </head>
 <body>
 <h1>Админ-панель рассылок</h1>
 
+<!-- Отображение сообщений об успехе -->
+<div th:if="${successMessage}" class="success-message" th:text="${successMessage}">
+    Сообщение об успехе будет здесь.
+</div>
+
+<!-- Отображение сообщений об ошибках -->
+<div th:if="${errorMessage}" class="error-message" th:text="${errorMessage}">
+    Сообщение об ошибке будет здесь.
+</div>
+
+<!-- Отображение ошибок валидации -->
+<div th:if="${#fields.hasErrors('messageRequest.*')}" class="error-message">
+    <ul>
+        <li th:each="err : ${#fields.errors('messageRequest.*')}" th:text="${err}"></li>
+    </ul>
+</div>
+
 <!-- Изменения здесь: enctype="multipart/form-data" и method="post" -->
-<form th:action="@{/admin/send}" method="post" enctype="multipart/form-data">
+<!-- Важно: восстанавливаем значения полей, если были ошибки -->
+<form th:action="@{/admin/send}" method="post" enctype="multipart/form-data" th:object="${messageRequest}">
     <label for="text">Сообщение (для подписи к картинке, если есть)</label><br/>
-    <textarea id="text" name="text" rows="4" cols="50" placeholder="Сообщение для отправки"></textarea><br/><br/>
+    <textarea id="text" name="text" rows="4" cols="50" placeholder="Сообщение для отправки"
+              th:field="*{text}"></textarea><br/><br/>
 
     <!-- Новое поле для загрузки файла -->
     <label for="photo">Изображение</label><br/>

@@ -1,8 +1,9 @@
 package com.example.telegramadmin.service;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.example.telegramadmin.dto.NotificationResultDto;
+import com.example.telegramadmin.dto.NotificationRecipientDto;
+import com.example.telegramadmin.enums.NotificationStatus;
 import org.springframework.http.*;
-import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
@@ -10,10 +11,17 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-
+import org.springframework.web.client.ResourceAccessException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
+
+import com.example.telegramadmin.exceptions.MessageSendingException;
+import com.example.telegramadmin.dto.MessageRequest;
 
 @Service
 public class TelegramHttpService {
@@ -27,6 +35,8 @@ public class TelegramHttpService {
     private static final String TELEGRAM_API_URL = "https://api.telegram.org/bot";
     private static final String SEND_MESSAGE_METHOD = "/sendMessage";
     private static final String SEND_PHOTO_METHOD = "/sendPhoto";
+    private static final String COPY_MESSAGE_METHOD = "/copyMessage";
+
 
     private final RestTemplate restTemplate;
 
@@ -35,66 +45,126 @@ public class TelegramHttpService {
         // Можно настроить таймауты и другие параметры
         // restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
     }
+//    public void copyMessage(List<NotificationRecipientDto> recipients, Long from_chat_id, Integer message_id) throws MessageSendingException {
+//        if (recipients == null || recipients.isEmpty()) {
+//            System.out.println("Recipients list is empty");
+//            throw new MessageSendingException("Recipients list is empty");
+//        }
+//
+//        if (from_chat_id == null || message_id == null) {
+//            System.out.println("Source chat ID and message ID are required");
+//            throw new MessageSendingException("Source chat ID and message ID are required");
+//        }
+//
+//        String url = TELEGRAM_API_URL + botToken + "/copyMessage";
+//
+//        for (NotificationRecipientDto recipient : recipients) {
+//            // Подготовка параметров для каждого получателя
+//            Map<String, Object> params = new HashMap<>();
+//            params.put("chat_id", recipient.getTelegramUserId()); // ID получателя
+//            params.put("from_chat_id", from_chat_id);            // ID чата-источника
+//            params.put("message_id", message_id);                // ID сообщения для копирования
+//
+//            try {
+//                ResponseEntity<String> response = restTemplate.postForEntity(url, params, String.class);
+//
+//                if (!response.getStatusCode().is2xxSuccessful()) {
+//                    // Логируем ошибку, но продолжаем отправку другим получателям
+//                    System.err.println("Failed to copy message to user " + recipient.getTelegramUserId() +
+//                            ": " + response.getStatusCode());
+//                }else{
+//                    System.out.println("Not failed to copy message " + message_id + " to user " + recipient.getTelegramUserId() + " from " + from_chat_id +
+//                            ": " + response.getStatusCode());
+//                }
+//
+//            } catch (Exception e) {
+//                // Логируем ошибку, но продолжаем отправку другим получателям
+//                System.err.println("Error copying message to user " + recipient.getTelegramUserId() +
+//                        ": " + e.getMessage());
+//            }
+//        }
+//    }
 
-    /**
-     * Отправка текстового сообщения в Telegram API
-     * @param text Текст сообщения
-     * @return Сырой JSON ответ от Telegram API или строка с ошибкой
-     */
-    public String sendTextMessage(String text) {
-        if (text == null || text.trim().isEmpty()) {
-            return createLocalErrorResponse("HttpService <-- Текст сообщения пуст.");
+    public List<NotificationResultDto> copyMessage(List<NotificationRecipientDto> recipients, Long from_chat_id, Integer message_id) throws MessageSendingException {
+        if (recipients == null || recipients.isEmpty()) {
+            System.out.println("Recipients list is empty");
+            throw new MessageSendingException("Recipients list is empty");
         }
-        return sendMessage(text, null);
+
+        if (from_chat_id == null || message_id == null) {
+            System.out.println("Source chat ID and message ID are required");
+            throw new MessageSendingException("Source chat ID and message ID are required");
+        }
+
+        String url = TELEGRAM_API_URL + botToken + "/copyMessage";
+        List<NotificationResultDto> results = new ArrayList<>();
+
+        for (NotificationRecipientDto recipient : recipients) {
+            // Подготовка параметров для каждого получателя
+            Map<String, Object> params = new HashMap<>();
+            params.put("chat_id", recipient.getTelegramUserId()); // ID получателя
+            params.put("from_chat_id", from_chat_id);            // ID чата-источника
+            params.put("message_id", message_id);                // ID сообщения для копирования
+
+            try {
+                ResponseEntity<String> response = restTemplate.postForEntity(url, params, String.class);
+
+                if (response.getStatusCode().is2xxSuccessful()) {
+                    // Успешная отправка
+                    results.add(new NotificationResultDto(recipient, NotificationStatus.SUCCESS));
+                    System.out.println("Successfully copied message " + message_id + " to user " + recipient.getTelegramUserId());
+                } else {
+                    // Ошибка HTTP
+                    NotificationResultDto failedResult = new NotificationResultDto(recipient, NotificationStatus.ERROR);
+                    failedResult.setDetailedMessage("HTTP Error: " + response.getStatusCode());
+                    results.add(failedResult);
+
+                    System.err.println("Failed to copy message to user " + recipient.getTelegramUserId() +
+                            ": " + response.getStatusCode());
+                }
+
+            } catch (Exception e) {
+                // Ошибка сети или другая исключительная ситуация
+                NotificationResultDto failedResult = new NotificationResultDto(recipient, NotificationStatus.ERROR);
+                failedResult.setDetailedMessage("Exception: " + e.getMessage());
+                results.add(failedResult);
+
+                System.err.println("Error copying message to user " + recipient.getTelegramUserId() +
+                        ": " + e.getMessage());
+            }
+        }
+
+        return results;
     }
 
-    /**
-     * Отправка сообщения с изображением в Telegram API
-     * @param caption Подпись к изображению (может быть null)
-     * @param photoFile Файл изображения
-     * @return Сырой JSON ответ от Telegram API или строка с ошибкой
-     */
-    public String sendPhotoMessage(String caption, MultipartFile photoFile) {
-        if (photoFile == null || photoFile.isEmpty()) {
-            return createLocalErrorResponse("HttpService <-- Файл изображения не выбран или пуст.");
-        }
-        return sendMessage(caption, photoFile);
-    }
 
-    /**
-     * Основной метод отправки сообщения
-     * @param text Текст сообщения или подпись
-     * @param photoFile Файл изображения (null для текстового сообщения)
-     * @return Сырой JSON ответ от Telegram API или строка с ошибкой
-     */
-    private String sendMessage(String text, MultipartFile photoFile) {
+
+    public String sendMessage(MessageRequest request) throws MessageSendingException {
+        String text = request.getText();
+        MultipartFile photoFile = request.getPhoto();
+
         // Валидация конфигурации
         if (botToken == null || botToken.isEmpty()) {
-            return createLocalErrorResponse("HttpService <-- bot.token не задан.");
+            throw new MessageSendingException("Bot token is not configured (bot.token).");
         }
-
         if (targetChatId == null) {
-            return createLocalErrorResponse("HttpService <-- target.chatId не задан.");
+            throw new MessageSendingException("Target chat ID is not configured (target.chatId).");
         }
 
-        try {
-            if (photoFile == null) {
-                // Текстовое сообщение
-                return sendTextMessageToApi(text);
-            } else {
-                // Сообщение с фото
-                return sendPhotoMessageToApi(text, photoFile);
+        // Определяем какой метод использовать на основе наличия файла
+        if (photoFile == null || photoFile.isEmpty()) {
+            return sendTextMessageToApi(text);
+        } else {
+            // Проверяем что файл действительно содержит данные
+            if (photoFile.getSize() == 0) {
+                throw new MessageSendingException("Photo file is empty");
             }
-        } catch (Exception e) {
-            // Логируем исключение и возвращаем ошибку в JSON формате
-            return createExceptionResponse(e);
+            return sendPhotoMessageToApi(text, photoFile);
         }
-    }
+}
 
-    /**
-     * Отправка текстового сообщения через Telegram API
-     */
-    private String sendTextMessageToApi(String text) {
+    // Отправка текстового сообщения через Telegram API
+    private String sendTextMessageToApi(String text)  throws MessageSendingException {
         String url = TELEGRAM_API_URL + botToken + SEND_MESSAGE_METHOD;
 
         // Подготовка параметров
@@ -104,30 +174,33 @@ public class TelegramHttpService {
         params.put("parse_mode", "HTML"); // Можно сделать конфигурируемым
 
         try {
-            ResponseEntity<String> response = restTemplate.postForEntity(
-                    url,
-                    params,
-                    String.class
-            );
-
+            ResponseEntity<String> response = restTemplate.postForEntity(url, params, String.class);
+            // Проверяем статус ответа. Если не 2xx, бросаем исключение
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new MessageSendingException("Telegram API returned non-success status: " + response.getStatusCode());
+            }
             return response.getBody();
 
-        } catch (HttpClientErrorException e) {
-            // 4xx ошибки (клиентские)
-            return createHttpErrorResponse(e.getStatusCode(), e.getResponseBodyAsString());
-        } catch (HttpServerErrorException e) {
-            // 5xx ошибки (серверные)
-            return createHttpErrorResponse(e.getStatusCode(), e.getResponseBodyAsString());
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            // Это ошибки 4xx и 5xx от Telegram
+            String errorDetail = e.getResponseBodyAsString();
+            throw new MessageSendingException("Telegram API error: " + e.getStatusCode() + " - " + errorDetail, e);
+        } catch (ResourceAccessException e) {
+            // Проблемы с сетью (таймаут, нет соединения)
+            throw new MessageSendingException("Network error while calling Telegram API: " + e.getMessage(), e);
         } catch (RestClientException e) {
-            // Остальные ошибки RestTemplate
-            return createRestClientExceptionResponse(e);
+            // Все остальные ошибки RestClient
+            throw new MessageSendingException("RestClient error: " + e.getMessage(), e);
         }
     }
 
-    /**
-     * Отправка сообщения с фото через Telegram API
-     */
-    private String sendPhotoMessageToApi(String caption, MultipartFile photoFile) {
+    // Отправка сообщения с фото через Telegram API
+    private String sendPhotoMessageToApi(String caption, MultipartFile photoFile) throws MessageSendingException {
+        // Проверяем что файл не пустой
+        if (photoFile == null || photoFile.isEmpty() || photoFile.getSize() == 0) {
+            throw new MessageSendingException("Photo file is required for photo message");
+        }
+
         String url = TELEGRAM_API_URL + botToken + SEND_PHOTO_METHOD;
 
         try {
@@ -145,9 +218,9 @@ public class TelegramHttpService {
 
             // Часть с файлом
             byte[] fileBytes = getFileBytes(photoFile);
-            if (fileBytes.length == 0) {
-                return createLocalErrorResponse("Не удалось прочитать файл изображения.");
-            }
+//            if (fileBytes.length == 0) {
+////                return createLocalErrorResponse("Не удалось прочитать файл изображения.");
+//            }
 
             HttpHeaders fileHeaders = new HttpHeaders();
             fileHeaders.setContentType(MediaType.IMAGE_JPEG); // или определять по расширению
@@ -164,100 +237,26 @@ public class TelegramHttpService {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-            HttpEntity<MultiValueMap<String, Object>> requestEntity =
-                    new HttpEntity<>(body, headers);
+            HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
 
-            // Отправка запроса
-            ResponseEntity<String> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.POST,
-                    requestEntity,
-                    String.class
-            );
-
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new MessageSendingException("Telegram API returned non-success status: " + response.getStatusCode());
+            }
             return response.getBody();
 
-        } catch (HttpClientErrorException e) {
-            return createHttpErrorResponse(e.getStatusCode(), e.getResponseBodyAsString());
-        } catch (RestClientException e) {
-            return createRestClientExceptionResponse(e);
         } catch (IOException e) {
-            return createLocalErrorResponse("Ошибка чтения файла: " + e.getMessage());
+            throw new MessageSendingException("Failed to read photo file: " + e.getMessage(), e);
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            String errorDetail = e.getResponseBodyAsString();
+            throw new MessageSendingException("Telegram API error: " + e.getStatusCode() + " - " + errorDetail, e);
+        } catch (ResourceAccessException e) {
+            throw new MessageSendingException("Network error while calling Telegram API: " + e.getMessage(), e);
+        } catch (RestClientException e) {
+            throw new MessageSendingException("RestClient error: " + e.getMessage(), e);
         }
     }
 
-    /**
-     * Создание ответа для локальных ошибок (до вызова API)
-     */
-    private String createLocalErrorResponse(String errorMessage) {
-        // Форматируем как JSON, чтобы фабрика могла парсить
-        return String.format("""
-            {
-                "ok": false,
-                "error_code": 400,
-                "description": "%s",
-                "local_error": true
-            }
-            """, errorMessage.replace("\"", "\\\""));
-    }
-
-    /**
-     * Создание ответа для HTTP ошибок
-     */
-    private String createHttpErrorResponse(HttpStatusCode statusCode, String responseBody) {
-        // Если Telegram уже вернул JSON с ошибкой, возвращаем его как есть
-        if (responseBody != null && responseBody.trim().startsWith("{")) {
-            return responseBody;
-        }
-
-        // Иначе создаем свой JSON
-        return String.format("""
-            {
-                "ok": false,
-                "error_code": %d,
-                "description": "HTTP Error: %s",
-                "http_status": %d
-            }
-            """,
-                statusCode.value(),
-                statusCode.toString(),
-                statusCode.value()
-        );
-    }
-
-    /**
-     * Создание ответа для исключений RestClient
-     */
-    private String createRestClientExceptionResponse(RestClientException e) {
-        return String.format("""
-            {
-                "ok": false,
-                "error_code": 500,
-                "description": "RestClient Error: %s",
-                "exception_type": "%s"
-            }
-            """,
-                e.getMessage(),
-                e.getClass().getSimpleName()
-        );
-    }
-
-    /**
-     * Создание ответа для общих исключений
-     */
-    private String createExceptionResponse(Exception e) {
-        return String.format("""
-            {
-                "ok": false,
-                "error_code": 500,
-                "description": "Exception: %s",
-                "exception_type": "%s"
-            }
-            """,
-                e.getMessage(),
-                e.getClass().getSimpleName()
-        );
-    }
 
     /**
      * Вспомогательный метод для получения байтов из MultipartFile
@@ -268,47 +267,4 @@ public class TelegramHttpService {
         }
         return file.getBytes();
     }
-
-//    /**
-//     * Дополнительные методы для других операций Telegram API
-//     */
-//
-//    public String getUpdates(Long offset) {
-//        String url = TELEGRAM_API_URL + botToken + "/getUpdates";
-//
-//        Map<String, Object> params = new HashMap<>();
-//        if (offset != null) {
-//            params.put("offset", offset);
-//        }
-//        params.put("timeout", 30); // Можно вынести в конфиг
-//
-//        try {
-//            ResponseEntity<String> response = restTemplate.postForEntity(
-//                    url,
-//                    params,
-//                    String.class
-//            );
-//            return response.getBody();
-//        } catch (Exception e) {
-//            return createExceptionResponse(e);
-//        }
-//    }
-//
-//    public String getMe() {
-//        String url = TELEGRAM_API_URL + botToken + "/getMe";
-//
-//        try {
-//            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-//            return response.getBody();
-//        } catch (Exception e) {
-//            return createExceptionResponse(e);
-//        }
-//    }
-//
-//    /**
-//     * Метод для проверки соединения с Telegram API
-//     */
-//    public String testConnection() {
-//        return getMe();
-//    }
 }

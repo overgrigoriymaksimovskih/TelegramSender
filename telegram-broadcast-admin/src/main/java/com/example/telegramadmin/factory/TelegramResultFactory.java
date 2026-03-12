@@ -6,16 +6,11 @@ import com.example.telegramadmin.dto.tg_result.Success;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.objects.Message;
 
-/**
- * Фабрика для создания результатов работы с Telegram API.
- * Метод {@link #fromTelegramResponse(String, Class)} анализирует JSON‑ответ
- * и возвращает {@code Result<T>}.
- */
+/*
+Фабрика для создания результатов работы с Telegram API.
+*/
 @Component
 public class TelegramResultFactory {
 
@@ -26,13 +21,6 @@ public class TelegramResultFactory {
         objectMapper.findAndRegisterModules(); // регистрируем JSR‑310 и т.п.
     }
 
-    /**
-     * Анализирует JSON‑ответ от Telegram API и создаёт объект {@code Result<T>}.
-     *
-     * @param json   строка JSON, полученная от Telegram
-     * @param clazz  класс, в который нужно превратить поле {@code result}
-     * @return {@code Success<T>} при успешном ответе, иначе {@code Failure<T>}
-     */
     public <T> Result<T> fromTelegramResponse(String json, Class<T> clazz) {
         if (json == null || json.isBlank()) {
             return createFailure(null, "Пустой ответ от Telegram");
@@ -45,7 +33,7 @@ public class TelegramResultFactory {
             return createFailure(e);
         }
 
-        // 1️⃣ Проверяем наличие поля "ok"
+        // Проверяем наличие поля "ok"
         JsonNode okNode = root.get("ok");
         if (okNode == null || !okNode.isBoolean()) {
             return createFailure(null, "Ответ не содержит булево поле \"ok\"");
@@ -54,7 +42,7 @@ public class TelegramResultFactory {
         boolean ok = okNode.asBoolean();
 
         if (ok) {
-            // 2️⃣ Успешный ответ – пытаемся извлечь "result"
+            // Успешный ответ – пытаемся извлечь "result"
             JsonNode resultNode = root.get("result");
             if (resultNode == null || resultNode.isNull()) {
                 // Telegram иногда возвращает ok:true без result (например, при ping)
@@ -72,7 +60,7 @@ public class TelegramResultFactory {
                 return createFailure(e);
             }
         } else {
-            // 3️⃣ Ошибка API – извлекаем код и описание
+            // Ошибка API – извлекаем код и описание
             JsonNode errorCodeNode = root.get("error_code");
             JsonNode descriptionNode = root.get("description");
 
