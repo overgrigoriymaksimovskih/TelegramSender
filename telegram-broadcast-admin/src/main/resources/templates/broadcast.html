@@ -75,6 +75,28 @@
     <button type="submit">Отправить</button>
 </form>
 
-<p>Тут будет список рассылок или форма для их отправки.</p>
+<!-- Таблица с результатами отправки -->
+<div th:if="${sendResults}">
+    <h2>Результаты отправки:</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>ID пользователя</th>
+            <th>Имя</th>
+            <th>Статус</th>
+            <th>Детали</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="result : ${sendResults}">
+            <td th:text="${result.user.telegramUserId}"></td>
+            <td th:text="${result.user.firstName}"></td>
+            <td th:text="${result.status}"></td>
+            <td th:text="${result.detailedMessage}"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
 </body>
 </html>

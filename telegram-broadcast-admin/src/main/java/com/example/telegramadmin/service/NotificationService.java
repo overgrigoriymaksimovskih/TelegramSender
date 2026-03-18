@@ -5,7 +5,7 @@ import com.example.telegramadmin.dto.NotificationRecipientDto;
 import com.example.telegramadmin.dto.NotificationResultDto;
 import com.example.telegramadmin.dto.tg_result.Result;
 import com.example.telegramadmin.dto.tg_result.Success;
-import com.example.telegramadmin.enums.NotificationStatus;
+//import com.example.telegramadmin.enums.NotificationStatus;
 import com.example.telegramadmin.exceptions.MessageSendingException;
 import com.example.telegramadmin.factory.TelegramResultFactory;
 import com.example.telegramadmin.repository.AppUserRepository;
@@ -32,20 +32,18 @@ public class NotificationService {
         this.appUserRepository = appUserRepository;
     }
 
-    public List<NotificationRecipientDto> getRecipientsDtoList(Long telegramUserId) {
-        List<NotificationRecipientDto> result = appUserRepository.findNotificationDtoByTelegramUserId(telegramUserId);
+    public List<NotificationRecipientDto> getRecipientsDtoList() {
+        List<NotificationRecipientDto> result = appUserRepository.findAllNotificationDto();
         return new ArrayList<>(result);
     }
 
-    public List<NotificationResultDto> getFailedNotifications(List<NotificationResultDto> results) {
-        return results.stream()
-                .filter(result -> result.getStatus() != NotificationStatus.SUCCESS)
-                .collect(Collectors.toList());
-    }
+//    public List<NotificationResultDto> getFailedNotifications(List<NotificationResultDto> results) {
+//        return results.stream()
+//                .filter(result -> result.getStatus() != NotificationStatus.SUCCESS)
+//                .collect(Collectors.toList());
+//    }
 
-    public List<NotificationResultDto> sendCopyOfMessageToRecipients (List<NotificationRecipientDto> notificationRecipientsDtoList, Result<Message> result) throws MessageSendingException {
-        // Внутри result хранится объект Message
-        Message message = ((Success<Message>) result).getValue();
+    public List<NotificationResultDto> sendCopyOfMessageToRecipients (List<NotificationRecipientDto> notificationRecipientsDtoList, Message message) throws MessageSendingException {
         return telegramHttpService.copyMessage(notificationRecipientsDtoList, message.getChatId(), message.getMessageId());
     }
 

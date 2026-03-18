@@ -1,6 +1,7 @@
 package com.example.telegramadmin.controller;
 
 import com.example.telegramadmin.dto.MessageRequest;
+import com.example.telegramadmin.dto.NotificationResultDto;
 import com.example.telegramadmin.exceptions.MessageSendingException;
 import com.example.telegramadmin.service.BroadcastOrchestrator;
 import jakarta.validation.Valid;
@@ -13,6 +14,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
 
 @Controller
 public class AdminController {
@@ -28,20 +31,32 @@ public class AdminController {
     @GetMapping("/admin/broadcast")
     public String showSendForm(@ModelAttribute("successMessage") String successMessage,
                                @ModelAttribute("errorMessage") String errorMessage,
-                               org.springframework.ui.Model model) { // Добавляем Model
-        // Если есть сообщения, добавляем их в модель для отображения
+                               org.springframework.ui.Model model) {
+
+        // Добавляем сообщения, если они есть
         if (successMessage != null && !successMessage.isEmpty()) {
             model.addAttribute("successMessage", successMessage);
         }
         if (errorMessage != null && !errorMessage.isEmpty()) {
             model.addAttribute("errorMessage", errorMessage);
         }
+
+        // Получаем результаты из flash атрибутов
+//        List<NotificationResultDto> sendResults = (List<NotificationResultDto>) model.asMap().get("sendResults");
+        Object sendResultsObj = model.asMap().get("sendResults");
+        if (sendResultsObj instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<NotificationResultDto> sendResults = (List<NotificationResultDto>) sendResultsObj;
+            model.addAttribute("sendResults", sendResults);
+        }
+
         // Добавляем пустой объект MessageRequest для формы, если он не был сохранен
         if (!model.containsAttribute("messageRequest")) {
             model.addAttribute("messageRequest", new MessageRequest());
         }
-        return "broadcast"; // Название HTML-шаблона (без .html)
+        return "broadcast";
     }
+
 
     // POST-эндпойнт для обработки отправки формы
     @PostMapping("/admin/send")
@@ -60,9 +75,11 @@ public class AdminController {
 
         try {
             // Пытаемся отправить сообщение
-            broadcastOrchestrator.sendMessage(request);
-            // Если исключения не было - всё успешно
-            redirectAttributes.addFlashAttribute("successMessage", "Сообщение успешно отправлено!");
+            List<NotificationResultDto> sendResults = broadcastOrchestrator.sendMessage(request);
+            // Добавляем результаты в атрибуты для отображения на странице
+            redirectAttributes.addFlashAttribute("sendResults", sendResults);
+            redirectAttributes.addFlashAttribute("successMessage", "Сообщение отправлено! Результаты ниже.");
+
             return "redirect:/admin/broadcast";
         } catch (MessageSendingException e) {
             // Ловим наше исключение и возвращаем на форму с информацией об ошибке

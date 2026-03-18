@@ -45,6 +45,7 @@ public class TelegramHttpService {
         // Можно настроить таймауты и другие параметры
         // restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
     }
+
 //    public void copyMessage(List<NotificationRecipientDto> recipients, Long from_chat_id, Integer message_id) throws MessageSendingException {
 //        if (recipients == null || recipients.isEmpty()) {
 //            System.out.println("Recipients list is empty");
@@ -85,14 +86,53 @@ public class TelegramHttpService {
 //        }
 //    }
 
+//    public List<NotificationResultDto> copyMessage(List<NotificationRecipientDto> recipients, Long from_chat_id, Integer message_id) throws MessageSendingException {
+//        if (recipients == null || recipients.isEmpty()) {
+//            throw new MessageSendingException("Recipients list is empty");
+//        }
+//
+//        if (from_chat_id == null || message_id == null) {
+//            throw new MessageSendingException("Source chat ID and message ID are required");
+//        }
+//
+//        String url = TELEGRAM_API_URL + botToken + "/copyMessage";
+//        List<NotificationResultDto> results = new ArrayList<>();
+//
+//        for (NotificationRecipientDto recipient : recipients) {
+//            // Подготовка параметров для каждого получателя
+//            Map<String, Object> params = new HashMap<>();
+//            params.put("chat_id", recipient.getTelegramUserId()); // ID получателя
+//            params.put("from_chat_id", from_chat_id);             // ID чата-источника
+//            params.put("message_id", message_id);                 // ID сообщения для копирования
+//
+//            try {
+//                ResponseEntity<String> response = restTemplate.postForEntity(url, params, String.class);
+//
+//                if (response.getStatusCode().is2xxSuccessful()) {
+//                    // Успешная отправка
+//                    results.add(new NotificationResultDto(recipient, NotificationStatus.SUCCESS));
+//                } else {
+//                    // Ошибка HTTP
+//                    results.add(new NotificationResultDto(recipient, NotificationStatus.ERROR));
+//                }
+//
+//            } catch (Exception e) {
+//                // Ошибка сети или другая исключительная ситуация
+//                NotificationResultDto failedResult = new NotificationResultDto(recipient, NotificationStatus.ERROR);
+//                failedResult.setDetailedMessage("Exception: " + e.getMessage());
+//                results.add(failedResult);
+//            }
+//        }
+//
+//        return results;
+//    }
+
     public List<NotificationResultDto> copyMessage(List<NotificationRecipientDto> recipients, Long from_chat_id, Integer message_id) throws MessageSendingException {
         if (recipients == null || recipients.isEmpty()) {
-            System.out.println("Recipients list is empty");
             throw new MessageSendingException("Recipients list is empty");
         }
 
         if (from_chat_id == null || message_id == null) {
-            System.out.println("Source chat ID and message ID are required");
             throw new MessageSendingException("Source chat ID and message ID are required");
         }
 
@@ -100,42 +140,39 @@ public class TelegramHttpService {
         List<NotificationResultDto> results = new ArrayList<>();
 
         for (NotificationRecipientDto recipient : recipients) {
-            // Подготовка параметров для каждого получателя
             Map<String, Object> params = new HashMap<>();
-            params.put("chat_id", recipient.getTelegramUserId()); // ID получателя
-            params.put("from_chat_id", from_chat_id);            // ID чата-источника
-            params.put("message_id", message_id);                // ID сообщения для копирования
+            params.put("chat_id", recipient.getTelegramUserId());
+            params.put("from_chat_id", from_chat_id);
+            params.put("message_id", message_id);
 
             try {
                 ResponseEntity<String> response = restTemplate.postForEntity(url, params, String.class);
 
-                if (response.getStatusCode().is2xxSuccessful()) {
-                    // Успешная отправка
-                    results.add(new NotificationResultDto(recipient, NotificationStatus.SUCCESS));
-                    System.out.println("Successfully copied message " + message_id + " to user " + recipient.getTelegramUserId());
-                } else {
-                    // Ошибка HTTP
-                    NotificationResultDto failedResult = new NotificationResultDto(recipient, NotificationStatus.ERROR);
-                    failedResult.setDetailedMessage("HTTP Error: " + response.getStatusCode());
-                    results.add(failedResult);
+                // Этот код выполнится только при успешном ответе (2xx)
+                results.add(new NotificationResultDto(recipient, NotificationStatus.SUCCESS));
 
-                    System.err.println("Failed to copy message to user " + recipient.getTelegramUserId() +
-                            ": " + response.getStatusCode());
-                }
-
-            } catch (Exception e) {
-                // Ошибка сети или другая исключительная ситуация
+            } catch (HttpClientErrorException e) {
+                // Специфичная обработка HTTP ошибок
                 NotificationResultDto failedResult = new NotificationResultDto(recipient, NotificationStatus.ERROR);
-                failedResult.setDetailedMessage("Exception: " + e.getMessage());
+
+                if (e.getStatusCode() == HttpStatus.FORBIDDEN) {
+                    failedResult.setDetailedMessage("Bot was blocked by the user or doesn't have access");
+                } else {
+                    failedResult.setDetailedMessage("HTTP Error: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+                }
                 results.add(failedResult);
 
-                System.err.println("Error copying message to user " + recipient.getTelegramUserId() +
-                        ": " + e.getMessage());
+            } catch (Exception e) {
+                // Обработка всех других исключений (сеть, таймауты и т.д.)
+                NotificationResultDto failedResult = new NotificationResultDto(recipient, NotificationStatus.ERROR);
+                failedResult.setDetailedMessage("Network error: " + e.getMessage());
+                results.add(failedResult);
             }
         }
 
         return results;
     }
+
 
 
 

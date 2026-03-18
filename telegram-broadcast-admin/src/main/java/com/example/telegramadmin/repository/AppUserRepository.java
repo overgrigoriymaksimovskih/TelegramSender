@@ -10,10 +10,11 @@ import java.util.Optional;
 public interface AppUserRepository extends JpaRepository<AppUser, Long> {
     Optional<AppUser> findByTelegramUserId(Long telegramUserId);
 
-//    @Query("SELECT new com.example.telegramadmin.dto.NotificationRecipientDto(u.telegramUserId, u.firstName) " +
-//            "FROM AppUser u WHERE u.telegramUserId = :telegramUserId")
-//    Optional<NotificationRecipientDto> findNotificationDtoByTelegramUserId(Long telegramUserId);
     @Query("SELECT new com.example.telegramadmin.dto.NotificationRecipientDto(u.telegramUserId, u.firstName) " +
             "FROM AppUser u WHERE u.telegramUserId = :telegramUserId")
     List<NotificationRecipientDto> findNotificationDtoByTelegramUserId(Long telegramUserId);
+
+    @Query("SELECT new com.example.telegramadmin.dto.NotificationRecipientDto(u.telegramUserId, u.firstName) " +
+            "FROM AppUser u")
+    List<NotificationRecipientDto> findAllNotificationDto();
 }
