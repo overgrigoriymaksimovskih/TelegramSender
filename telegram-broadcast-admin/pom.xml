@@ -26,7 +26,7 @@
     <telegrambot.version>6.9.7.1</telegrambot.version>
     <javax.xml.bind.version>2.3.1</javax.xml.bind.version>
 
-    <lombok.servion>1.18.30</lombok.servion>
+    <lombok.version>1.18.30</lombok.version>
   </properties>
 
   <dependencies>
@@ -72,11 +72,18 @@
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
 
+    <!-- ✅ ДЛЯ WebClient
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webflux</artifactId>
+    </dependency> -->
+
+
 
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
-      <version>${lombok.servion}</version>
+      <version>${lombok.version}</version>
       <scope>provided</scope>
     </dependency>
 

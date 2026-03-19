@@ -3,7 +3,6 @@ package com.example.telegramadmin.service;
 import com.example.telegramadmin.dto.MessageRequest;
 import com.example.telegramadmin.dto.NotificationRecipientDto;
 import com.example.telegramadmin.dto.NotificationResultDto;
-import com.example.telegramadmin.dto.tg_result.Failure;
 import com.example.telegramadmin.dto.tg_result.Result;
 import com.example.telegramadmin.dto.tg_result.Success;
 import com.example.telegramadmin.factory.TelegramResultFactory;
@@ -19,17 +18,22 @@ import java.util.List;
 @Service
 public class BroadcastOrchestrator {
     private final TelegramResultFactory telegramResultFactory;
-    private final NotificationService notificationService;
+    private final MessageCopierService messageCopierService;
+    private final MessageSenderService messageSenderService;
+    private final RecipientService recipientService;
+
 
     @Autowired
-    public BroadcastOrchestrator(TelegramResultFactory telegramResultFactory, NotificationService notificationService) {
+    public BroadcastOrchestrator(TelegramResultFactory telegramResultFactory, MessageCopierService messageCopierService, MessageSenderService messageSenderService, RecipientService recipientService) {
         this.telegramResultFactory = telegramResultFactory;
-        this.notificationService = notificationService;
+        this.messageCopierService = messageCopierService;
+        this.messageSenderService = messageSenderService;
+        this.recipientService = recipientService;
     }
     public List<NotificationResultDto> sendMessage(MessageRequest request)  throws MessageSendingException{
         try{
             // Отправляем сообщение и получаем JSON‑ответ
-            String jsonResponse = notificationService.crateMainMessage(request);
+            String jsonResponse = messageSenderService.sendMessage(request);
 
             // Если мы здесь, значит ответ успешный (200 OK). Парсим его.
             // Преобразуем JSON в Result<Message>
@@ -44,10 +48,10 @@ public class BroadcastOrchestrator {
             if (result.isSuccess()) {
                 List<NotificationRecipientDto> notificationRecipientsDtoList = new ArrayList<>();
                 notificationRecipientsDtoList.add(new NotificationRecipientDto(6128969029L,"testing recipient 1"));
-                notificationRecipientsDtoList.add(new NotificationRecipientDto(610200129L,"testing recipient 2"));
+                notificationRecipientsDtoList.add(new NotificationRecipientDto(6102001290000L,"testing recipient 2"));
 
 
-                List<NotificationResultDto> allNotifications = notificationService.sendCopyOfMessageToRecipients(notificationRecipientsDtoList, message);
+                List<NotificationResultDto> allNotifications = messageCopierService.copyMessage(notificationRecipientsDtoList, message.getChatId(), message.getMessageId());
                 return allNotifications;
 //                for(NotificationResultDto dto:allNotifications){
 //                    System.out.println(dto.getStatus() + " -> " + dto.getUser().getTelegramUserId() + " -> " + dto.getUser().getFirstName() + " -> " + dto.getDetailedMessage());

@@ -1,28 +1,3 @@
-<!--<!DOCTYPE html>-->
-<!--<html xmlns:th="http://www.thymeleaf.org">-->
-<!--<head>-->
-<!--    <title>Рассылка</title>-->
-<!--    <link rel="stylesheet" th:href="@{'/static/css/style.css'}" />-->
-<!--</head>-->
-<!--<body>-->
-<!--<h1>Админ-панель рассылок</h1>-->
-
-<!--&lt;!&ndash; Изменения здесь: enctype="multipart/form-data" и method="post" &ndash;&gt;-->
-<!--<form th:action="@{/admin/send}" method="post" enctype="multipart/form-data">-->
-<!--    <label for="text">Сообщение (для подписи к картинке, если есть)</label><br/>-->
-<!--    <textarea id="text" name="text" rows="4" cols="50" placeholder="Сообщение для отправки"></textarea><br/><br/>-->
-
-<!--    &lt;!&ndash; Новое поле для загрузки файла &ndash;&gt;-->
-<!--    <label for="photo">Изображение</label><br/>-->
-<!--    <input type="file" id="photo" name="photo" accept="image/*"><br/><br/>-->
-
-<!--    <button type="submit">Отправить</button>-->
-<!--</form>-->
-
-<!--<p>Тут будет список рассылок или форма для их отправки.</p>-->
-<!--</body>-->
-<!--</html>-->
-
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -68,7 +43,7 @@
     <textarea id="text" name="text" rows="4" cols="50" placeholder="Сообщение для отправки"
               th:field="*{text}"></textarea><br/><br/>
 
-    <!-- Новое поле для загрузки файла -->
+    <!-- Поле для загрузки файла -->
     <label for="photo">Изображение</label><br/>
     <input type="file" id="photo" name="photo" accept="image/*"><br/><br/>
 

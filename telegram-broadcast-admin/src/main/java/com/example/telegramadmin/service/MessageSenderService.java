@@ -1,30 +1,22 @@
 package com.example.telegramadmin.service;
 
-import com.example.telegramadmin.dto.NotificationResultDto;
-import com.example.telegramadmin.dto.NotificationRecipientDto;
-import com.example.telegramadmin.enums.NotificationStatus;
+import com.example.telegramadmin.dto.MessageRequest;
+import com.example.telegramadmin.exceptions.MessageSendingException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.client.ResourceAccessException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Value;
 
-import com.example.telegramadmin.exceptions.MessageSendingException;
-import com.example.telegramadmin.dto.MessageRequest;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
-public class TelegramHttpService {
+public class MessageSenderService {
 
     @Value("${bot.token}")
     private String botToken;
@@ -35,62 +27,12 @@ public class TelegramHttpService {
     private static final String TELEGRAM_API_URL = "https://api.telegram.org/bot";
     private static final String SEND_MESSAGE_METHOD = "/sendMessage";
     private static final String SEND_PHOTO_METHOD = "/sendPhoto";
-    private static final String COPY_MESSAGE_METHOD = "/copyMessage";
-
 
     private final RestTemplate restTemplate;
 
-    public TelegramHttpService() {
+    @Autowired
+    public MessageSenderService() {
         this.restTemplate = new RestTemplate();
-        // Можно настроить таймауты и другие параметры
-        // restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
-    }
-
-    // Вызывает метод копирования сообщения в АПИ телеграма для каждого получателя (элемента списка)
-    public List<NotificationResultDto> copyMessage(List<NotificationRecipientDto> recipients, Long from_chat_id, Integer message_id) throws MessageSendingException {
-        if (recipients == null || recipients.isEmpty()) {
-            throw new MessageSendingException("Recipients list is empty");
-        }
-
-        if (from_chat_id == null || message_id == null) {
-            throw new MessageSendingException("Source chat ID and message ID are required");
-        }
-
-        String url = TELEGRAM_API_URL + botToken + "/copyMessage";
-        List<NotificationResultDto> results = new ArrayList<>();
-
-        for (NotificationRecipientDto recipient : recipients) {
-            Map<String, Object> params = new HashMap<>();
-            params.put("chat_id", recipient.getTelegramUserId());
-            params.put("from_chat_id", from_chat_id);
-            params.put("message_id", message_id);
-
-            try {
-                ResponseEntity<String> response = restTemplate.postForEntity(url, params, String.class);
-
-                // Этот код выполнится только при успешном ответе (2xx)
-                results.add(new NotificationResultDto(recipient, NotificationStatus.SUCCESS));
-
-            } catch (HttpClientErrorException e) {
-                // Специфичная обработка HTTP ошибок
-                NotificationResultDto failedResult = new NotificationResultDto(recipient, NotificationStatus.ERROR);
-
-                if (e.getStatusCode() == HttpStatus.FORBIDDEN) {
-                    failedResult.setDetailedMessage("Bot was blocked by the user or doesn't have access");
-                } else {
-                    failedResult.setDetailedMessage("HTTP Error: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
-                }
-                results.add(failedResult);
-
-            } catch (Exception e) {
-                // Обработка всех других исключений (сеть, таймауты и т.д.)
-                NotificationResultDto failedResult = new NotificationResultDto(recipient, NotificationStatus.ERROR);
-                failedResult.setDetailedMessage("Network error: " + e.getMessage());
-                results.add(failedResult);
-            }
-        }
-
-        return results;
     }
 
     // Определяет какой метод отправки вызывать
@@ -116,7 +58,7 @@ public class TelegramHttpService {
             }
             return sendPhotoMessageToApi(text, photoFile);
         }
-}
+    }
 
     // Отправка текстового сообщения через Telegram API
     private String sendTextMessageToApi(String text)  throws MessageSendingException {
@@ -211,7 +153,6 @@ public class TelegramHttpService {
             throw new MessageSendingException("RestClient error: " + e.getMessage(), e);
         }
     }
-
 
     /**
      * Вспомогательный метод для получения байтов из MultipartFile
