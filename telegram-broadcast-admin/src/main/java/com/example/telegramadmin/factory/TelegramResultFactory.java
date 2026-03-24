@@ -1,12 +1,12 @@
 package com.example.telegramadmin.factory;
 
+import org.springframework.stereotype.Component;
 import com.example.telegramadmin.dto.tg_result.Failure;
 import com.example.telegramadmin.dto.tg_result.Result;
 import com.example.telegramadmin.dto.tg_result.Success;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
-import org.springframework.stereotype.Component;
 
 /*
 Фабрика для создания результатов работы с Telegram API.

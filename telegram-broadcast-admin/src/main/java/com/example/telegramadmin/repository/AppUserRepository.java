@@ -1,9 +1,9 @@
 package com.example.telegramadmin.repository;
 
+import org.springframework.data.jpa.repository.Query;
 import com.example.telegramadmin.dto.NotificationRecipientDto;
 import com.example.telegramadmin.entity.AppUser;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 import java.util.Optional;
 

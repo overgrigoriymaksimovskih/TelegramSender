@@ -1,11 +1,11 @@
 package com.example.telegramadmin.service;
 
-import com.example.telegramadmin.dto.MessageRequest;
-import com.example.telegramadmin.exceptions.MessageSendingException;
+import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import com.example.telegramadmin.dto.MessageRequest;
+import com.example.telegramadmin.exceptions.MessageSendingException;
 import org.springframework.http.*;
-import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.*;
@@ -27,12 +27,11 @@ public class MessageSenderService {
     private static final String TELEGRAM_API_URL = "https://api.telegram.org/bot";
     private static final String SEND_MESSAGE_METHOD = "/sendMessage";
     private static final String SEND_PHOTO_METHOD = "/sendPhoto";
-
     private final RestTemplate restTemplate;
 
     @Autowired
-    public MessageSenderService() {
-        this.restTemplate = new RestTemplate();
+    public MessageSenderService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
     }
 
     // Определяет какой метод отправки вызывать
@@ -62,6 +61,7 @@ public class MessageSenderService {
 
     // Отправка текстового сообщения через Telegram API
     private String sendTextMessageToApi(String text)  throws MessageSendingException {
+        System.out.println("Мы в методе отправки первого тестового сообщения через рестТемплейт");
         String url = TELEGRAM_API_URL + botToken + SEND_MESSAGE_METHOD;
 
         // Подготовка параметров
@@ -115,12 +115,9 @@ public class MessageSenderService {
 
             // Часть с файлом
             byte[] fileBytes = getFileBytes(photoFile);
-//            if (fileBytes.length == 0) {
-////                return createLocalErrorResponse("Не удалось прочитать файл изображения.");
-//            }
 
             HttpHeaders fileHeaders = new HttpHeaders();
-            fileHeaders.setContentType(MediaType.IMAGE_JPEG); // или определять по расширению
+            fileHeaders.setContentType(MediaType.IMAGE_JPEG);
             fileHeaders.setContentDisposition(
                     ContentDisposition.builder("form-data")
                             .name("photo")

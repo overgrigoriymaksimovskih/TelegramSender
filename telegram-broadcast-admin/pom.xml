@@ -57,7 +57,7 @@
       <version>${telegrambot.version}</version>
     </dependency>
 
-    <!-- Веб-интерфейс -->
+    <!-- Веб-интерфейс для всех веб взаимодействий кроме отправки списка пользователей в ТЕЛЕГРАМ АПИ-->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
@@ -66,17 +66,17 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-thymeleaf</artifactId>
     </dependency>
+    <!--ДЛЯ WebClient который рективный и отправляет весь список для отправки сообщений в ТГ АПИ быстрее-->
+<dependency>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter-webflux</artifactId>
+</dependency>
+
     <!-- ВАЛИДАЦИЯ ВЕБ ФОРМЫ -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
-
-    <!-- ✅ ДЛЯ WebClient
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-webflux</artifactId>
-    </dependency> -->
 
 
 

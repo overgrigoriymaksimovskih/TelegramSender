@@ -1,5 +1,7 @@
 package com.example.telegramadmin.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import com.example.telegramadmin.dto.MessageRequest;
 import com.example.telegramadmin.dto.NotificationRecipientDto;
 import com.example.telegramadmin.dto.NotificationResultDto;
@@ -7,8 +9,6 @@ import com.example.telegramadmin.dto.tg_result.Result;
 import com.example.telegramadmin.dto.tg_result.Success;
 import com.example.telegramadmin.factory.TelegramResultFactory;
 import org.telegram.telegrambots.meta.api.objects.Message;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import com.example.telegramadmin.exceptions.MessageSendingException;
 
@@ -48,7 +48,9 @@ public class BroadcastOrchestrator {
             if (result.isSuccess()) {
                 List<NotificationRecipientDto> notificationRecipientsDtoList = new ArrayList<>();
                 notificationRecipientsDtoList.add(new NotificationRecipientDto(6128969029L,"testing recipient 1"));
-                notificationRecipientsDtoList.add(new NotificationRecipientDto(6102001290000L,"testing recipient 2"));
+                notificationRecipientsDtoList.add(new NotificationRecipientDto(6128969029L,"testing recipient 2"));
+                notificationRecipientsDtoList.add(new NotificationRecipientDto(6128969029L,"testing recipient 3"));
+//                notificationRecipientsDtoList.add(new NotificationRecipientDto(610200129L,"testing recipient 2"));
 
 
                 List<NotificationResultDto> allNotifications = messageCopierService.copyMessage(notificationRecipientsDtoList, message.getChatId(), message.getMessageId());

@@ -1,9 +1,9 @@
 package com.example.telegramadmin.service;
 
-import com.example.telegramadmin.dto.NotificationRecipientDto;
-import com.example.telegramadmin.repository.AppUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.example.telegramadmin.dto.NotificationRecipientDto;
+import com.example.telegramadmin.repository.AppUserRepository;
 
 import java.util.ArrayList;
 import java.util.List;
