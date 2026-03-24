@@ -2,7 +2,7 @@ package com.example.telegramadmin.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.example.telegramadmin.dto.MessageRequest;
+import com.example.telegramadmin.dto.TelegramApiRequest;
 import com.example.telegramadmin.dto.NotificationRecipientDto;
 import com.example.telegramadmin.dto.NotificationResultDto;
 import com.example.telegramadmin.dto.tg_result.Result;
@@ -30,7 +30,7 @@ public class BroadcastOrchestrator {
         this.messageSenderService = messageSenderService;
         this.recipientService = recipientService;
     }
-    public List<NotificationResultDto> sendMessage(MessageRequest request)  throws MessageSendingException{
+    public List<NotificationResultDto> sendMessage(TelegramApiRequest request)  throws MessageSendingException{
         try{
             // Отправляем сообщение и получаем JSON‑ответ
             String jsonResponse = messageSenderService.sendMessage(request);
@@ -48,7 +48,7 @@ public class BroadcastOrchestrator {
             if (result.isSuccess()) {
                 List<NotificationRecipientDto> notificationRecipientsDtoList = new ArrayList<>();
                 notificationRecipientsDtoList.add(new NotificationRecipientDto(6128969029L,"testing recipient 1"));
-                notificationRecipientsDtoList.add(new NotificationRecipientDto(6128969029L,"testing recipient 2"));
+                notificationRecipientsDtoList.add(new NotificationRecipientDto(61289690299L,"testing recipient 2"));
                 notificationRecipientsDtoList.add(new NotificationRecipientDto(6128969029L,"testing recipient 3"));
 //                notificationRecipientsDtoList.add(new NotificationRecipientDto(610200129L,"testing recipient 2"));
 

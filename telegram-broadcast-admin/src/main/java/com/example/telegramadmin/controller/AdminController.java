@@ -7,7 +7,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import com.example.telegramadmin.dto.MessageRequest;
+import com.example.telegramadmin.dto.TelegramApiRequest;
 import com.example.telegramadmin.dto.NotificationResultDto;
 import com.example.telegramadmin.exceptions.MessageSendingException;
 import com.example.telegramadmin.service.BroadcastOrchestrator;
@@ -70,7 +70,7 @@ public class AdminController {
         // Обеспечиваем наличие объекта MessageRequest для формы
         // Если форма была отправлена с ошибками, сохраняем введенные данные
         if (!model.containsAttribute("messageRequest")) {
-            model.addAttribute("messageRequest", new MessageRequest());
+            model.addAttribute("messageRequest", new TelegramApiRequest());
         }
 
         return "broadcast";
@@ -86,7 +86,7 @@ public class AdminController {
     // Здесь Нотификациями мы говорим: полученный запрос нужно смаппить на объект типа messageRequest и валидировать
     // Метод валидации можно найти в самом классе "MesssageRequest" с аннотацией @AssertTrue (true - валидация пройдена)
     // BindingResult сохранит в себя результат маппинга полученного запроса на объект типа Messagerequest
-    public String handleSendForm(@Valid @ModelAttribute("messageRequest") MessageRequest request,
+    public String handleSendForm(@Valid @ModelAttribute("messageRequest") TelegramApiRequest request,
                                  BindingResult bindingResult,
                                  RedirectAttributes redirectAttributes) {
 

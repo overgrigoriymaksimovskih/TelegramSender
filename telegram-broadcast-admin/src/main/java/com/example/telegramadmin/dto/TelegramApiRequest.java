@@ -3,7 +3,7 @@ package com.example.telegramadmin.dto;
 import jakarta.validation.constraints.AssertTrue;
 import org.springframework.web.multipart.MultipartFile;
 
-public class MessageRequest {
+public class TelegramApiRequest {
 
     /** Текст сообщения (может быть пустым) */
     private String text;

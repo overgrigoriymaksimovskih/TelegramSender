@@ -3,7 +3,7 @@ package com.example.telegramadmin.service;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import com.example.telegramadmin.dto.MessageRequest;
+import com.example.telegramadmin.dto.TelegramApiRequest;
 import com.example.telegramadmin.exceptions.MessageSendingException;
 import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
@@ -35,7 +35,7 @@ public class MessageSenderService {
     }
 
     // Определяет какой метод отправки вызывать
-    public String sendMessage(MessageRequest request) throws MessageSendingException {
+    public String sendMessage(TelegramApiRequest request) throws MessageSendingException {
         String text = request.getText();
         MultipartFile photoFile = request.getPhoto();
 
