@@ -61,7 +61,6 @@ public class MessageSenderService {
 
     // Отправка текстового сообщения через Telegram API
     private String sendTextMessageToApi(String text)  throws MessageSendingException {
-        System.out.println("Мы в методе отправки первого тестового сообщения через рестТемплейт");
         String url = TELEGRAM_API_URL + botToken + SEND_MESSAGE_METHOD;
 
         // Подготовка параметров

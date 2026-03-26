@@ -14,6 +14,7 @@ import com.example.telegramadmin.service.BroadcastOrchestrator;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 public class AdminController {
@@ -49,6 +50,12 @@ public class AdminController {
         // этот блок кода нужен только, чтобы убедиться в том, что в model лежит список с объектами ожидаемого типа
         // БЕЗОПАСНОЕ извлечение результатов отправки из flash-атрибутов
         Object sendResultsObj = model.asMap().get("sendResults");
+        Optional<Object> optional = Optional.ofNullable(sendResultsObj);
+//        if (sendResultsObj == null) {
+//            // Обработка null
+//            model.addAttribute("sendResults", createErrorResult("Результаты отправки отсутствуют"));
+//        }
+
         if (sendResultsObj instanceof List) {
             try {
                 // Проверяем, что все элементы списка имеют ожидаемый тип
@@ -65,6 +72,7 @@ public class AdminController {
                 model.addAttribute("sendResults", createErrorResult("Ошибка приведения типа для sendResults: " + e.getMessage()));
             }
         }
+
         // Если мы здесь значит в списке лежат объекты типа NotificationResultDto и они корректно отобразятся во view
 
         // Обеспечиваем наличие объекта MessageRequest для формы

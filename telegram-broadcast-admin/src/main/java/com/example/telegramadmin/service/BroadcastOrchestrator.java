@@ -9,7 +9,7 @@ import com.example.telegramadmin.dto.tg_result.Result;
 import com.example.telegramadmin.dto.tg_result.Success;
 import com.example.telegramadmin.factory.TelegramResultFactory;
 import org.telegram.telegrambots.meta.api.objects.Message;
-
+import java.util.stream.Collectors;
 import com.example.telegramadmin.exceptions.MessageSendingException;
 
 import java.util.ArrayList;
@@ -46,32 +46,93 @@ public class BroadcastOrchestrator {
 
             // Обрабатываем успешный ответ
             if (result.isSuccess()) {
-                List<NotificationRecipientDto> notificationRecipientsDtoList = new ArrayList<>();
-                notificationRecipientsDtoList.add(new NotificationRecipientDto(6128969029L,"testing recipient 1"));
-                notificationRecipientsDtoList.add(new NotificationRecipientDto(61289690299L,"testing recipient 2"));
-                notificationRecipientsDtoList.add(new NotificationRecipientDto(6128969029L,"testing recipient 3"));
-//                notificationRecipientsDtoList.add(new NotificationRecipientDto(610200129L,"testing recipient 2"));
 
 
-                List<NotificationResultDto> allNotifications = messageCopierService.copyMessage(notificationRecipientsDtoList, message.getChatId(), message.getMessageId());
-                return allNotifications;
+//----------------------------------------------------------------------------------------------------------------------
+                // Код для тестовой проверки получения списка получателей из базы
+                // Получаем список пользователей для уведомлений и печатаем его в консоль
+                List<NotificationRecipientDto> notificationRecipientsDtoList = recipientService.getRecipientsDtoList();
+                for(NotificationRecipientDto recipient :notificationRecipientsDtoList){
+                    System.out.println(recipient.getFirstName() + " " + recipient.getTelegramUserId());
+                }
+                return null;
+//----------------------------------------------------------------------------------------------------------------------
+
+
+////----------------------------------------------------------------------------------------------------------------------
+//                // Код для тестовой отправки собранному вручную списку пользователей
+//                List<NotificationRecipientDto> notificationRecipientsDtoList = new ArrayList<>();
+//                notificationRecipientsDtoList.add(new NotificationRecipientDto(6128969029L,"testing recipient 1"));
+//                notificationRecipientsDtoList.add(new NotificationRecipientDto(61289690299L,"testing recipient 2"));
+//                notificationRecipientsDtoList.add(new NotificationRecipientDto(6128969029L,"testing recipient 3"));
+//                for (int i = 4; i <= 10; i++) {
+//                    notificationRecipientsDtoList.add(new NotificationRecipientDto(6128969029L,"testing recipient " + i));
+//                }
+//
+//                List<NotificationResultDto> allNotifications = messageCopierService.copyMessage(notificationRecipientsDtoList, message.getChatId(), message.getMessageId());
+//
 //                for(NotificationResultDto dto:allNotifications){
 //                    System.out.println(dto.getStatus() + " -> " + dto.getUser().getTelegramUserId() + " -> " + dto.getUser().getFirstName() + " -> " + dto.getDetailedMessage());
 //                }
-//                        // Получаем список пользователей для уведомлений
-//                List<NotificationRecipientDto> notificationRecipientsDtoList = notificationService.getRecipientsDtoList();
-//                for(NotificationRecipientDto recipient :notificationRecipientsDtoList){
-//                    System.out.println(recipient.getFirstName() + " " + recipient.getTelegramUserId());
+//                return allNotifications;
+////----------------------------------------------------------------------------------------------------------------------
+
+
+////----------------------------------------------------------------------------------------------------------------------
+//                //Код для тестовой отправки полученному из БД и отфильтрованному списку пользователей
+//                // !!! Получаем список пользователей для уведомлений !!!
+//                List<NotificationRecipientDto> notificationRecipientsDtoList = recipientService.getRecipientsDtoList();
+//
+//                // Задаем ИД которым отправим сообщение если эти ИД есть в полученном списке
+//                List<Long> targetIds = List.of(6128969029L, 61289690299L, 610200129L);
+//
+//                // Получаем список с выбранными ИД (фильтруем)
+//                List<NotificationRecipientDto> filteredRecipients = notificationRecipientsDtoList.stream()
+//                        .filter(recipient -> targetIds.contains(recipient.getTelegramUserId()))
+//                        .collect(Collectors.toList());
+//
+//                // Отправляем копию на рассылку
+//                List<NotificationResultDto> allNotifications = messageCopierService.copyMessage(filteredRecipients, message.getChatId(), message.getMessageId());
+//
+//                for(NotificationResultDto dto:allNotifications){
+//                    System.out.println(dto.getStatus() + " -> " + dto.getUser().getTelegramUserId() + " -> " + dto.getUser().getFirstName() + " -> " + dto.getDetailedMessage());
 //                }
-//                // Копируем отправленное сообщениe всем пользователям
-//                List<NotificationResultDto> allNotifications = notificationService.sendCopyOfMessageToRecipients(notificationRecipientsDtoList, message);
-//                // Выбираем тех кто не смог получить копию сообщения
-//                List<NotificationResultDto> failedNotifications = notificationService.getFailedNotifications(allNotifications);
-//                // ВОТ ТУТ НУЖНО ВЕРНУТЬ В КОНТРОЛЛЕР ИД ЮЗЕРА НОМЕР ОШИБКИ И ДЕСКРИПШН
-//                return failedNotifications;
+//                return allNotifications;
+////----------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//                // КОД ДЛЯ РЕАЛЬНОЙ ОТПРАВКИ КОПИИ СООБЩЕНИЯ ВСЕМ ПОЛЬЗОВАТЕЛЯМ
+
+//                // !!! Получаем список пользователей для уведомлений !!!
+//                List<NotificationRecipientDto> notificationRecipientsDtoList = recipientService.getRecipientsDtoList();
+
+//                // !!! Копируем отправленное сообщение всем пользователям !!!
+//                List<NotificationResultDto> allNotifications = messageCopierService.copyMessage(notificationRecipientsDtoList, message.getChatId(), message.getMessageId());
+
+//                for(NotificationResultDto dto:allNotifications){
+//                    System.out.println(dto.getStatus() + " -> " + dto.getUser().getTelegramUserId() + " -> " + dto.getUser().getFirstName() + " -> " + dto.getDetailedMessage());
+//                }
+//                return allNotifications;
+////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
             } else {
                 // Обработка случая, если основное сообщение не отправилось
-                //todo тут будет объект failure ? че с ним делать
                 throw new MessageSendingException("Failed to send initial message: ");
             }
         }catch (MessageSendingException e){
